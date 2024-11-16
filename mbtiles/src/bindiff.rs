@@ -7,7 +7,7 @@ use std::time::Instant;
 use enum_display::EnumDisplay;
 use flume::{bounded, Receiver, Sender};
 use futures::TryStreamExt;
-use log::{debug, error, info};
+use log::{debug, error, info, warn};
 use martin_tile_utils::{decode_brotli, decode_gzip, encode_brotli, encode_gzip, TileCoord};
 use serde::{Deserialize, Serialize};
 use sqlite_compressions::{BsdiffRawDiffer, Differ as _};
@@ -73,8 +73,15 @@ pub trait BinDiffer<S: Send + 'static, T: Send + 'static>: Sized + Send + Sync +
     async fn run(self, conn: &mut SqliteConnection, sql_where: String) -> MbtResult<()> {
         let patcher = Arc::new(self);
         let has_errors = Arc::new(AtomicBool::new(false));
-        let (tx_wrk, rx_wrk) = bounded(num_cpus::get() * 3);
-        let (tx_ins, rx_ins) = bounded::<T>(num_cpus::get() * 3);
+        let cpus = match std::thread::available_parallelism() {
+            Ok(p) => p.get(),
+            Err(e) => {
+                warn!("cannot access the available_parallelism because {e:?}, defaulting to 1");
+                1
+            }
+        };
+        let (tx_wrk, rx_wrk) = bounded(cpus * 3);
+        let (tx_ins, rx_ins) = bounded::<T>(cpus * 3);
 
         {
             let has_errors = has_errors.clone();
@@ -133,7 +140,13 @@ fn start_processor_threads<S: Send + 'static, T: Send + 'static, P: BinDiffer<S,
     tx_ins: Sender<T>,
     has_errors: Arc<AtomicBool>,
 ) {
-    let cpus = num_cpus::get();
+    let cpus = match std::thread::available_parallelism() {
+        Ok(p) => p.get(),
+        Err(e) => {
+            warn!("cannot access the available_parallelism because {e:?}, defaulting to 1");
+            1
+        }
+    };
     info!("Processing bindiff patches using {cpus} threads...");
     (0..cpus).for_each(|_| {
         let rx_wrk = rx_wrk.clone();

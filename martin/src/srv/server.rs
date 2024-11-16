@@ -12,7 +12,7 @@ use actix_web::{middleware, route, web, App, HttpResponse, HttpServer, Responder
 use futures::TryFutureExt;
 #[cfg(feature = "lambda")]
 use lambda_web::{is_running_on_lambda, run_actix_on_lambda};
-use log::error;
+use log::{error, warn};
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "webui")]
@@ -147,7 +147,15 @@ pub fn new_server(config: SrvConfig, state: ServerState) -> MartinResult<(Server
     let catalog = Catalog::new(&state)?;
 
     let keep_alive = Duration::from_secs(config.keep_alive.unwrap_or(KEEP_ALIVE_DEFAULT));
-    let worker_processes = config.worker_processes.unwrap_or_else(num_cpus::get);
+    let worker_processes = config.worker_processes.unwrap_or_else(||{
+        match std::thread::available_parallelism() {
+            Ok(p) => p.get(),
+            Err(e) => {
+                warn!("cannot access the available_parallelism because {e:?}. Defaulting to 1 worker_process");
+                1
+            }
+        }
+    });
     let listen_addresses = config
         .listen_addresses
         .clone()

@@ -90,7 +90,6 @@ log.workspace = true
 martin-tile-utils.workspace = true
 mbtiles = { workspace = true, optional = true }
 moka.workspace = true
-num_cpus.workspace = true
 pbf_font_tools = { workspace = true, optional = true }
 pmtiles = { workspace = true, optional = true }
 postgis = { workspace = true, optional = true }
