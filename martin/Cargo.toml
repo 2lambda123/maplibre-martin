@@ -112,6 +112,7 @@ tilejson.workspace = true
 tokio = { workspace = true, features = ["io-std"] }
 tokio-postgres-rustls = { workspace = true, optional = true }
 url.workspace = true
+tokio-retry2.workspace = true
 
 [build-dependencies]
 walkdir = { workspace = true, optional = true }

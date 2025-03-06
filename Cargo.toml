@@ -94,6 +94,7 @@ tokio-postgres-rustls = "0.13"
 url = "2.5"
 walkdir = "2.5.0"
 xxhash-rust = { version = "0.8", features = ["xxh3"] }
+tokio-retry2 = { version = "0.5.7", features = ["jitter"] }
 
 [profile.dev.package]
 # See https://github.com/launchbadge/sqlx#compile-time-verification
