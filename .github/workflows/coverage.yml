@@ -55,6 +55,8 @@ jobs:
         run: cargo llvm-cov --all-features --workspace --codecov --output-path codecov.info
         env:
           DATABASE_URL: postgres://${{ env.PGUSER }}@${{ env.PGHOST }}:${{ job.services.postgres.ports[5432] }}/${{ env.PGDATABASE }}
+          AWS_NO_CREDENTIALS: 1
+          AWS_REGION: eu-central-1
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
